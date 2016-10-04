@@ -15,7 +15,40 @@ Hello, {{name}}!
 <form action="/logout" method="post">
     <button type="submit">Logout</button>
 </form>
+
+<form action="/hurricane" method="post">
+    <input type="text" placeholder="Hurricane Name" name="hname"/>
+    <input type="text" placeholder="Hurricane Location" name="hlocation"/>
+    <select name="hcategory">
+        <option selected disabled>Category</option>
+        <option value="ONE">1</option>
+        <option value="TWO">2</option>
+        <option value="THREE">3</option>
+        <option value="FOUR">4</option>
+        <option value="FIVE">5</option>
+    </select>
+    <input type="text" placeholder="image url" name="himage" width="200"/>
+    <button type="submit">Submit Hurricane</button>
+</form>
 {{/name}}
+<table>
+    <tr>
+        <th>Name</th>
+        <th>Location</th>
+        <th>Category</th>
+        <th>Submitter</th>
+        <th>Image</th>
+    </tr>
+{{#hurricanes}}
+    <tr>
+        <td>{{name}}</td>
+        <td>{{location}}</td>
+        <td>{{category}}</td>
+        <td>{{user.name}}</td>
+        <td><img src="{{image}}" width="100" height="100"/></td>
+    </tr>
+{{/hurricanes}}
+</table>
 
 </body>
 </html>
