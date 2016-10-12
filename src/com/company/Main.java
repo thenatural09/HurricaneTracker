@@ -1,17 +1,21 @@
 package com.company;
 
+import org.h2.tools.Server;
 import spark.ModelAndView;
 import spark.Session;
 import spark.Spark;
 import spark.template.mustache.MustacheTemplateEngine;
 import sun.jvm.hotspot.asm.sparc.SPARCArgument;
 
+import java.sql.*;
 import java.util.ArrayList;
 import java.util.HashMap;
 
 public class Main {
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws SQLException {
+        Server.createWebServer().start();
+        Connection conn = DriverManager.getConnection("jdbc:h2:./main");
         HashMap<String,User> users = new HashMap<>();
         ArrayList<Hurricane> hurricanes = new ArrayList<>();
 
@@ -84,4 +88,18 @@ public class Main {
                 }
         );
     }
+
+    public static void createTable(Connection conn) throws SQLException {
+        Statement stmt = conn.createStatement();
+        stmt.execute("CREATE TABLE IF NOT EXISTS hurricanes (id IDENTITY,name VARCHAR,location,VARCHAR,category INT,image VARCHAR)");
+    }
+
+    public static void insertHurricane(Connection conn,String name,String location,int category,String image) throws SQLException {
+        PreparedStatement stmt = conn.prepareStatement("INSERT INTO hurricanes VALUES(null,?,?,?,?)");
+        stmt.setString(1,name);
+        stmt.setString(2,location);
+        stmt.setInt(3,category);
+        stmt.setString(4,image);
+    }
+
 }
