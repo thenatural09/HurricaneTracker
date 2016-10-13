@@ -17,20 +17,18 @@ public class Main {
         Server.createWebServer().start();
         Connection conn = DriverManager.getConnection("jdbc:h2:./main");
         HashMap<String,User> users = new HashMap<>();
-        ArrayList<Hurricane> hurricanes = new ArrayList<>();
-
+        createTable(conn);
         Spark.get(
                 "/",
                 (request,response) -> {
                     Session session = request.session();
                     String name = session.attribute("loginName");
                     User user = users.get(name);
-
                     HashMap m = new HashMap();
                     if (user != null) {
                         m.put("name",user.name);
                     }
-                    m.put("hurricanes",hurricanes);
+                    m.put("hurricanes",selectHurricane(conn));
                     return new ModelAndView(m,"home.html");
                 },
                 new MustacheTemplateEngine()
@@ -79,10 +77,9 @@ public class Main {
                     }
                     String hname = request.queryParams("hname");
                     String hlocation = request.queryParams("hlocation");
-                    Hurricane.Category hcategory = Enum.valueOf(Hurricane.Category.class,request.queryParams("hcategory"));
+                    int hcategory = Integer.valueOf(request.queryParams("hcategory"));
                     String himage = request.queryParams("himage");
-                    Hurricane hurricane = new Hurricane(hname,hlocation,hcategory,himage,user);
-                    hurricanes.add(hurricane);
+                    insertHurricane(conn,hname,hlocation,hcategory,himage);
                     response.redirect("/");
                     return null;
                 }
@@ -91,7 +88,7 @@ public class Main {
 
     public static void createTable(Connection conn) throws SQLException {
         Statement stmt = conn.createStatement();
-        stmt.execute("CREATE TABLE IF NOT EXISTS hurricanes (id IDENTITY,name VARCHAR,location,VARCHAR,category INT,image VARCHAR)");
+        stmt.execute("CREATE TABLE IF NOT EXISTS hurricanes (id IDENTITY, name VARCHAR, location VARCHAR, category INT, image VARCHAR)");
     }
 
     public static void insertHurricane(Connection conn,String name,String location,int category,String image) throws SQLException {
@@ -102,4 +99,19 @@ public class Main {
         stmt.setString(4,image);
     }
 
+    public static ArrayList<Hurricane> selectHurricane(Connection conn) throws SQLException {
+        PreparedStatement stmt = conn.prepareStatement("SELECT * FROM hurricanes");
+        ResultSet results = stmt.executeQuery();
+        ArrayList<Hurricane> hurricanes = new ArrayList<>();
+        while (results.next()) {
+            int id = results.getInt("id");
+            String name = results.getString("name");
+            String location = results.getString("location");
+            int category = results.getInt("category");
+            String image = results.getString("image");
+            Hurricane hurricane = new Hurricane(id,name,location,category,image);
+            hurricanes.add(hurricane);
+        }
+        return hurricanes;
+    }
 }
