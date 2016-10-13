@@ -97,6 +97,7 @@ public class Main {
         stmt.setString(2,location);
         stmt.setInt(3,category);
         stmt.setString(4,image);
+        stmt.execute();
     }
 
     public static ArrayList<Hurricane> selectHurricane(Connection conn) throws SQLException {
