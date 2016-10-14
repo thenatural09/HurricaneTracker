@@ -32,9 +32,11 @@ public class MainTest {
     @Test
     public void testHurricane() throws SQLException {
         Connection conn = startConnection();
+        Main.insertUser(conn, "Troy", "pass");
+        User user = Main.selectUser(conn,"Troy");
         Main.insertHurricane(conn,"Matthew","Charleston",2,"image",1);
         ArrayList<Hurricane> hurricanes = Main.selectHurricane(conn);
         conn.close();
-        assertTrue(hurricanes.size() == 1);
+        assertTrue(hurricanes.size() > 0);
     }
 }

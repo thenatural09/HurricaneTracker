@@ -9,13 +9,14 @@ public class Hurricane {
     String location;
     int category;
     String image;
-    User user;
+    String author;
 
-    public Hurricane(int id,String name, String location, int category, String image) {
+    public Hurricane(int id,String name, String location, int category, String image,String author) {
         this.id = id;
         this.name = name;
         this.location = location;
         this.category = category;
         this.image = image;
+        this.author = author;
     }
 }

@@ -16,14 +16,13 @@ public class Main {
     public static void main(String[] args) throws SQLException {
         Server.createWebServer().start();
         Connection conn = DriverManager.getConnection("jdbc:h2:./main");
-        HashMap<String,User> users = new HashMap<>();
         createTables(conn);
         Spark.get(
                 "/",
                 (request,response) -> {
                     Session session = request.session();
                     String name = session.attribute("loginName");
-                    User user = users.get(name);
+                    User user = selectUser(conn,name);
                     HashMap m = new HashMap();
                     if (user != null) {
                         m.put("name",user.name);
@@ -39,10 +38,9 @@ public class Main {
                 (request,response) -> {
                     String name = request.queryParams("loginName");
                     String password = request.queryParams("password");
-                    User user = users.get(name);
+                    User user = selectUser(conn,name);
                     if (user == null) {
-                        user = new User(0,name,password);
-                        users.put(name,user);
+                        insertUser(conn,name,password);
                     }
                     else if (!password.equals(user.password)) {
                         response.redirect("/");
@@ -71,7 +69,7 @@ public class Main {
                 (request,response) -> {
                     Session session = request.session();
                     String name = session.attribute("loginName");
-                    User user = users.get(name);
+                    User user = selectUser(conn,name);
                     if (user == null) {
                         return null;
                     }
@@ -79,7 +77,7 @@ public class Main {
                     String hlocation = request.queryParams("hlocation");
                     int hcategory = Integer.valueOf(request.queryParams("hcategory"));
                     String himage = request.queryParams("himage");
-                    insertHurricane(conn,hname,hlocation,hcategory,himage,0);
+                    insertHurricane(conn,hname,hlocation,hcategory,himage,user.id);
                     response.redirect("/");
                     return null;
                 }
@@ -103,7 +101,7 @@ public class Main {
     }
 
     public static ArrayList<Hurricane> selectHurricane(Connection conn) throws SQLException {
-        PreparedStatement stmt = conn.prepareStatement("SELECT * FROM hurricanes");
+        PreparedStatement stmt = conn.prepareStatement("SELECT * FROM hurricanes INNER JOIN users ON hurricanes.user_id = users.id");
         ResultSet results = stmt.executeQuery();
         ArrayList<Hurricane> hurricanes = new ArrayList<>();
         while (results.next()) {
@@ -112,7 +110,8 @@ public class Main {
             String location = results.getString("location");
             int category = results.getInt("category");
             String image = results.getString("image");
-            Hurricane hurricane = new Hurricane(id,name,location,category,image);
+            String author = results.getString("users.name");
+            Hurricane hurricane = new Hurricane(id,name,location,category,image,author);
             hurricanes.add(hurricane);
         }
         return hurricanes;
