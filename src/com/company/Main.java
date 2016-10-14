@@ -17,7 +17,7 @@ public class Main {
         Server.createWebServer().start();
         Connection conn = DriverManager.getConnection("jdbc:h2:./main");
         HashMap<String,User> users = new HashMap<>();
-        createTable(conn);
+        createTables(conn);
         Spark.get(
                 "/",
                 (request,response) -> {
@@ -41,7 +41,7 @@ public class Main {
                     String password = request.queryParams("password");
                     User user = users.get(name);
                     if (user == null) {
-                        user = new User(name,password);
+                        user = new User(0,name,password);
                         users.put(name,user);
                     }
                     else if (!password.equals(user.password)) {
@@ -79,24 +79,26 @@ public class Main {
                     String hlocation = request.queryParams("hlocation");
                     int hcategory = Integer.valueOf(request.queryParams("hcategory"));
                     String himage = request.queryParams("himage");
-                    insertHurricane(conn,hname,hlocation,hcategory,himage);
+                    insertHurricane(conn,hname,hlocation,hcategory,himage,0);
                     response.redirect("/");
                     return null;
                 }
         );
     }
 
-    public static void createTable(Connection conn) throws SQLException {
+    public static void createTables(Connection conn) throws SQLException {
         Statement stmt = conn.createStatement();
-        stmt.execute("CREATE TABLE IF NOT EXISTS hurricanes (id IDENTITY, name VARCHAR, location VARCHAR, category INT, image VARCHAR)");
+        stmt.execute("CREATE TABLE IF NOT EXISTS hurricanes (id IDENTITY, name VARCHAR, location VARCHAR, category INT, image VARCHAR,user_id INT)");
+        stmt.execute("CREATE TABLE IF NOT EXISTS users (id IDENTITY,name VARCHAR,password VARCHAR)");
     }
 
-    public static void insertHurricane(Connection conn,String name,String location,int category,String image) throws SQLException {
-        PreparedStatement stmt = conn.prepareStatement("INSERT INTO hurricanes VALUES(null,?,?,?,?)");
+    public static void insertHurricane(Connection conn,String name,String location,int category,String image,int userId) throws SQLException {
+        PreparedStatement stmt = conn.prepareStatement("INSERT INTO hurricanes VALUES(null,?,?,?,?,?)");
         stmt.setString(1,name);
         stmt.setString(2,location);
         stmt.setInt(3,category);
         stmt.setString(4,image);
+        stmt.setInt(5,userId);
         stmt.execute();
     }
 
@@ -114,5 +116,24 @@ public class Main {
             hurricanes.add(hurricane);
         }
         return hurricanes;
+    }
+
+    public static void insertUser (Connection conn,String name,String password) throws SQLException {
+        PreparedStatement stmt = conn.prepareStatement("INSERT INTO users VALUES(null,?,?)");
+        stmt.setString(1,name);
+        stmt.setString(2,password);
+        stmt.execute();
+    }
+
+    public static User selectUser (Connection conn, String name) throws SQLException {
+        PreparedStatement stmt = conn.prepareStatement("SELECT * FROM users WHERE name = ?");
+        stmt.setString(1,name);
+        ResultSet results = stmt.executeQuery();
+        if (results.next()) {
+            int id = results.getInt("id");
+            String password = results.getString("password");
+            return new User(id,name,password);
+        }
+        return null;
     }
 }
